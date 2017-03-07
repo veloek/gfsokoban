@@ -12,21 +12,25 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 public class Sokoban implements GFInputListener, Updatable, Drawable {
+    private static final int STATUS_BAR_HEIGHT = 20;
+    
     private final Dimension windowSize;
     private String[] levels;
     
     private int levelIndex = 0;
     private MapTile[][] level;
+    private boolean restarting = false;
     private ArrayList<GameObject> gameObjects;
-    private Direction direction;
-    private boolean updatingGameObjects = false;
+    private int moves;
+    private int pushes;
+    private float time;
 
     public Sokoban(Dimension windowSize, String[] levels) {
         this.windowSize = windowSize;
         this.levels = levels;
 
-        this.loadLevel();
-        this.init();
+        loadLevel();
+        init();
     }
     
     // Load level from file
@@ -52,11 +56,14 @@ public class Sokoban implements GFInputListener, Updatable, Drawable {
     
     // Remove current game objects and create new from level definition
     private void init() {
-        this.updatingGameObjects = true;
+        this.restarting = true;
         this.gameObjects = new ArrayList<>();
+        this.moves = 0;
+        this.pushes = 0;
+        this.time = 0;
         
         int width = this.windowSize.width / this.level[0].length;
-        int height = this.windowSize.height / this.level.length;
+        int height = (this.windowSize.height-STATUS_BAR_HEIGHT) / this.level.length;
         Dimension cellSize = new Dimension(width, height);
         
         for (int row=0; row<this.level.length; row++) {
@@ -84,12 +91,11 @@ public class Sokoban implements GFInputListener, Updatable, Drawable {
             }
         }
         
-        this.updatingGameObjects = false;
+        this.restarting = false;
     }
 
-    // Check boundries for movement
     public boolean canMove(GameObject go, Direction direction) {
-        if (this.updatingGameObjects)
+        if (this.restarting)
             return false;
         
         Point pos = go.getPositionAfterMove(direction);
@@ -99,15 +105,29 @@ public class Sokoban implements GFInputListener, Updatable, Drawable {
     }
     
     public void checkFinished() {
-        if (this.updatingGameObjects)
+        if (this.restarting)
             return;
         
         if (this.gameObjects.stream()
                 .filter(go -> go instanceof Brick)
                 .allMatch(go -> ((Brick)go).isFinished())) {
 
-            this.loadNextLevel();
+            this.gameObjects.stream()
+                    .filter(go -> go instanceof Player)
+                    .forEach(p -> ((Player)p).setFinished(true));
+            
+            loadNextLevel();
         }
+    }
+    
+    public void reportMove() {
+        if (!this.restarting)
+            this.moves++;
+    }
+    
+    public void reportPush() {
+        if (!this.restarting)
+            this.pushes++;
     }
     
     private void loadNextLevel() {
@@ -115,44 +135,81 @@ public class Sokoban implements GFInputListener, Updatable, Drawable {
             this.levelIndex = 0;
         }
 
-        this.loadLevel();
-        this.init();
+        loadLevel();
+        init();
     }
 
     @Override
     public void onAction() {
-        this.init();
+        init();
     }
 
     @Override
     public void onAlternate() {
-        this.loadNextLevel();
+        loadNextLevel();
     }
 
     @Override
     public void onDirection(Direction direction) {
-        this.direction = direction;
-        
-        if (!this.updatingGameObjects)
-            this.gameObjects.forEach(go -> go.onDirectionChanged());
+        if (!this.restarting) {
+            this.gameObjects.stream()
+                    .filter(go -> go instanceof DirectionChangedListener)
+                    .forEach(dcl -> ((DirectionChangedListener)dcl)
+                            .onDirectionChanged(direction));
+        }
     }
 
     @Override
     public void update(float delta) {
-        if (!this.updatingGameObjects)
+        this.time += delta;
+        
+        if (!this.restarting)
             this.gameObjects.forEach(go -> go.update(delta));
     }
 
     @Override
     public void draw(Graphics g) {
-        g.drawString("Level " + (this.levelIndex+1) + "/" + this.levels.length, 5, this.windowSize.height-5);
+        drawStatusBar(g);
 
-        if (!this.updatingGameObjects)
+        if (!this.restarting)
             this.gameObjects.forEach(go -> go.draw(g));
     }
-
-    public Direction getDirection() {
-        return this.direction;
+    
+    private void drawStatusBar(Graphics g) {
+        StringBuilder statusString = new StringBuilder();
+        statusString.append(padNumber(this.levelIndex+1, 2))
+                .append(" | ")
+                .append("moves:").append(padNumber(this.moves, 4))
+                .append("          pushes:").append(padNumber(this.pushes, 4))
+                .append("          time:").append(formatTime(this.time));
+        
+        g.setColor(Color.WHITE);
+        g.fillRect(0, this.windowSize.height-STATUS_BAR_HEIGHT,
+                this.windowSize.width, STATUS_BAR_HEIGHT);
+        g.setColor(Color.BLACK);
+        g.setFont(new Font(Font.MONOSPACED, Font.BOLD, STATUS_BAR_HEIGHT-2));
+        g.drawString(statusString.toString(), 5, this.windowSize.height-5);
+    }
+    
+    private String padNumber(int number, int size) {
+        String num = String.valueOf(number);
+        String comp = String.valueOf((int)Math.pow(10, size-1));
+        int lengthOfNum = num.length();
+        int lengthOfComp = comp.length();
+        
+        for (int i=lengthOfNum; i<lengthOfComp; i++) {
+            num = "0" + num;
+        }
+        
+        return num;
+    }
+    
+    private String formatTime(float elapsedTimeInSeconds) {
+        int hours = (int) (elapsedTimeInSeconds / 3600);
+        int minutes = (int) ((elapsedTimeInSeconds - hours*3600) / 60);
+        int seconds = (int) (elapsedTimeInSeconds - hours*3600 - minutes*60);
+        
+        return hours + ":" + padNumber(minutes, 2) + ":" + padNumber(seconds, 2);
     }
 
 }

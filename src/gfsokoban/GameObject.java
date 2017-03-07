@@ -8,7 +8,7 @@ import java.awt.*;
  *
  * Holds sprite, size and position and knows how to draw itself.
  */
-public abstract class GameObject implements Drawable, Updatable, DirectionChangedListener {
+public abstract class GameObject implements Drawable, Updatable {
     protected Sokoban game;
     protected Dimension size;
     protected Point position;
@@ -75,9 +75,6 @@ public abstract class GameObject implements Drawable, Updatable, DirectionChange
 
     @Override
     public abstract void update(float delta);
-    
-    @Override
-    public void onDirectionChanged() {}
 
     public Dimension getSize() {
         return this.size;

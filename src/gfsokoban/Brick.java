@@ -39,7 +39,14 @@ public class Brick extends GameObject implements NPC {
 
     @Override
     public boolean tryingToEnter(GameObject object, Direction objectDirection) {
-        return object instanceof Player && this.move(objectDirection);
+        if (object instanceof Player && this.move(objectDirection)) {
+            if (!this.finished)
+                game.reportPush();
+
+            return true;
+        } else {
+            return false;
+        }
     }
     
     public boolean isFinished() {

@@ -5,10 +5,12 @@
  */
 package gfsokoban;
 
+import gameframe.Direction;
+
 /**
  *
  * @author veloek
  */
 public interface DirectionChangedListener {
-    void onDirectionChanged();
+    void onDirectionChanged(Direction direction);
 }
