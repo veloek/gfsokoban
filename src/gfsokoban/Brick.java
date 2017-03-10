@@ -21,19 +21,19 @@ public class Brick extends GameObject implements NPC {
 
     public Brick(Sokoban game, Dimension size, Point position) {
         super(game, size, position);
-        
+
         this.finished = false;
     }
 
     @Override
     public void update(float delta) {
-        
+
     }
-    
+
     @Override
     public void draw(Graphics g) {
         g.setColor(Color.RED);
-        g.drawRect(this.position.x, this.position.y,
+        g.fillRect(this.position.x, this.position.y,
                 this.size.width, this.size.height);
     }
 
@@ -48,7 +48,7 @@ public class Brick extends GameObject implements NPC {
             return false;
         }
     }
-    
+
     public boolean isFinished() {
         return this.finished;
     }
@@ -56,5 +56,5 @@ public class Brick extends GameObject implements NPC {
     public void setFinished(boolean b) {
         this.finished = true;
     }
-    
+
 }

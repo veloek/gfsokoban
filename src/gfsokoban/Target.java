@@ -23,13 +23,13 @@ public class Target extends GameObject implements NPC {
 
     @Override
     public void update(float delta) {
-        
+
     }
-    
+
     @Override
     public void draw(Graphics g) {
         g.setColor(Color.YELLOW);
-        g.drawRect(this.position.x, this.position.y,
+        g.fillRect(this.position.x, this.position.y,
                 this.size.width, this.size.height);
     }
 
@@ -39,8 +39,8 @@ public class Target extends GameObject implements NPC {
             ((Brick)object).setFinished(true);
             game.checkFinished();
         }
-        
+
         return true;
     }
-    
+
 }

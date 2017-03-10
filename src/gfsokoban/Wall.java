@@ -23,13 +23,13 @@ public class Wall extends GameObject implements NPC {
 
     @Override
     public void update(float delta) {
-        
+
     }
-    
+
     @Override
     public void draw(Graphics g) {
         g.setColor(Color.GREEN);
-        g.drawRect(this.position.x, this.position.y,
+        g.fillRect(this.position.x, this.position.y,
                 this.size.width, this.size.height);
     }
 
@@ -37,5 +37,5 @@ public class Wall extends GameObject implements NPC {
     public boolean tryingToEnter(GameObject object, Direction objectDirection) {
         return false; // Nothing can enter a wall... Doh!
     }
-    
+
 }
