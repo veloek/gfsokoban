@@ -29,8 +29,8 @@ public class Wall extends GameObject implements NPC {
     @Override
     public void draw(Graphics g) {
         g.setColor(Color.GREEN);
-        g.fillRect(this.position.x, this.position.y,
-                this.size.width, this.size.height);
+        g.fillRect(getPosition().x, getPosition().y,
+                getSize().width, getSize().height);
     }
 
     @Override

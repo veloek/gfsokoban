@@ -20,7 +20,7 @@ public class Brick extends GameObject implements NPC {
     private boolean finished;
 
     public Brick(Sokoban game, Dimension size, Point position) {
-        super(game, size, position);
+        super(game, size, position, null, 1);
 
         this.finished = false;
     }
@@ -33,15 +33,15 @@ public class Brick extends GameObject implements NPC {
     @Override
     public void draw(Graphics g) {
         g.setColor(Color.RED);
-        g.fillRect(this.position.x, this.position.y,
-                this.size.width, this.size.height);
+        g.fillRect(getPosition().x, getPosition().y,
+                getSize().width, getSize().height);
     }
 
     @Override
     public boolean tryingToEnter(GameObject object, Direction objectDirection) {
         if (object instanceof Player && this.move(objectDirection)) {
             if (!this.finished)
-                game.reportPush();
+                getGame().reportPush();
 
             return true;
         } else {

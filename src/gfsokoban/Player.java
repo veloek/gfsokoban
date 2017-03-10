@@ -14,7 +14,7 @@ public class Player extends GameObject implements DirectionChangedListener {
     private Point animateTo;
 
     public Player(Sokoban game, Dimension size, Point position) {
-        super(game, size, position);
+        super(game, size, position, 1);
 
         this.timeSinceLastUpdate = (float)UPDATE_INTERVAL;
     }
@@ -32,8 +32,8 @@ public class Player extends GameObject implements DirectionChangedListener {
     @Override
     public void draw(Graphics g) {
         g.setColor(Color.WHITE);
-        g.fillRect(this.position.x, this.position.y,
-                this.size.width, this.size.height);
+        g.fillRect(getPosition().x, getPosition().y,
+                getSize().width, getSize().height);
     }
 
     private void doAnimate() {
@@ -42,10 +42,13 @@ public class Player extends GameObject implements DirectionChangedListener {
         float timePerc = this.timeSinceLastUpdate / UPDATE_INTERVAL;
 
         if (timePerc < 1) {
-            this.position.x += (int) (deltaX * timePerc);
-            this.position.y += (int) (deltaY * timePerc);
+            Point newPosition = new Point(
+                    this.animateFrom.x + (int) (deltaX * timePerc),
+                    this.animateFrom.y + (int) (deltaY * timePerc));
+
+            setPosition(newPosition);
         } else {
-            this.position = this.animateTo;
+            setPosition(this.animateTo);
             this.animating = false;
         }
 
@@ -59,15 +62,15 @@ public class Player extends GameObject implements DirectionChangedListener {
                 timeSinceLastUpdate = 0;
 
                 if (!this.finished)
-                    game.reportMove();
+                    getGame().reportMove();
             }
         }
     }
 
     @Override
     protected boolean move(Direction direction) {
-        if (this.game.canMove(this, direction)) {
-            animate(this.position, this.getPositionAfterMove(direction));
+        if (getGame().canMove(this, direction)) {
+            animate(getPosition(), getPositionAfterMove(direction));
             return true;
         } else {
             return false;

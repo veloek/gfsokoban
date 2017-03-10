@@ -29,15 +29,15 @@ public class Target extends GameObject implements NPC {
     @Override
     public void draw(Graphics g) {
         g.setColor(Color.YELLOW);
-        g.fillRect(this.position.x, this.position.y,
-                this.size.width, this.size.height);
+        g.fillRect(getPosition().x, getPosition().y,
+                getSize().width, getSize().height);
     }
 
     @Override
     public boolean tryingToEnter(GameObject object, Direction objectDirection) {
         if (object instanceof Brick) {
             ((Brick)object).setFinished(true);
-            game.checkFinished();
+            getGame().checkFinished();
         }
 
         return true;

@@ -13,10 +13,10 @@ import java.io.InputStreamReader;
 
 public class Sokoban implements GFInputListener, Updatable, Drawable {
     private static final int STATUS_BAR_HEIGHT = 20;
-    
+
     private final Dimension windowSize;
     private String[] levels;
-    
+
     private int levelIndex = 0;
     private MapTile[][] level;
     private boolean restarting = false;
@@ -32,20 +32,20 @@ public class Sokoban implements GFInputListener, Updatable, Drawable {
         loadLevel();
         init();
     }
-    
+
     // Load level from file
     private void loadLevel() {
         try (BufferedReader br = new BufferedReader(
                 new InputStreamReader(getClass().getResourceAsStream(
                         this.levels[levelIndex])))) {
-            
+
             String line;
             ArrayList<String> input = new ArrayList<>();
-            
+
             while ((line = br.readLine()) != null) {
                 input.add(line);
             }
-            
+
             this.level = MapUtils.parseMap(input.toArray(new String[input.size()]));
 
         } catch (IOException | MapFormatException e) {
@@ -53,7 +53,7 @@ public class Sokoban implements GFInputListener, Updatable, Drawable {
             System.exit(1);
         }
     }
-    
+
     // Remove current game objects and create new from level definition
     private void init() {
         this.restarting = true;
@@ -61,11 +61,11 @@ public class Sokoban implements GFInputListener, Updatable, Drawable {
         this.moves = 0;
         this.pushes = 0;
         this.time = 0;
-        
+
         int width = this.windowSize.width / this.level[0].length;
         int height = (this.windowSize.height-STATUS_BAR_HEIGHT) / this.level.length;
         Dimension cellSize = new Dimension(width, height);
-        
+
         for (int row=0; row<this.level.length; row++) {
             MapTile[] mapRow = this.level[row];
 
@@ -90,24 +90,24 @@ public class Sokoban implements GFInputListener, Updatable, Drawable {
                 }
             }
         }
-        
+
         this.restarting = false;
     }
 
     public boolean canMove(GameObject go, Direction direction) {
         if (this.restarting)
             return false;
-        
+
         Point pos = go.getPositionAfterMove(direction);
         return !gameObjects.stream()
                 .filter(g -> g.isAtPosition(pos))
                 .anyMatch(g -> g instanceof NPC && !((NPC)g).tryingToEnter(go, direction));
     }
-    
+
     public void checkFinished() {
         if (this.restarting)
             return;
-        
+
         if (this.gameObjects.stream()
                 .filter(go -> go instanceof Brick)
                 .allMatch(go -> ((Brick)go).isFinished())) {
@@ -115,21 +115,21 @@ public class Sokoban implements GFInputListener, Updatable, Drawable {
             this.gameObjects.stream()
                     .filter(go -> go instanceof Player)
                     .forEach(p -> ((Player)p).setFinished(true));
-            
+
             loadNextLevel();
         }
     }
-    
+
     public void reportMove() {
         if (!this.restarting)
             this.moves++;
     }
-    
+
     public void reportPush() {
         if (!this.restarting)
             this.pushes++;
     }
-    
+
     private void loadNextLevel() {
         if (++this.levelIndex == this.levels.length) {
             this.levelIndex = 0;
@@ -162,19 +162,29 @@ public class Sokoban implements GFInputListener, Updatable, Drawable {
     @Override
     public void update(float delta) {
         this.time += delta;
-        
-        if (!this.restarting)
-            this.gameObjects.forEach(go -> go.update(delta));
+
+        if (this.restarting)
+            return;
+
+        this.gameObjects.forEach(go -> go.update(delta));
     }
 
     @Override
     public void draw(Graphics g) {
         drawStatusBar(g);
 
-        if (!this.restarting)
-            this.gameObjects.forEach(go -> go.draw(g));
+        if (this.restarting)
+            return;
+
+        this.gameObjects.stream().sorted(new Comparator<GameObject>() {
+            @Override
+            public int compare(GameObject o1, GameObject o2) {
+                return o1.getRenderIndex() < o2.getRenderIndex() ? -1 :
+                        o1.getRenderIndex() > o2.getRenderIndex() ? 1 : 0;
+            }
+        }).forEach(go -> go.draw(g));
     }
-    
+
     private void drawStatusBar(Graphics g) {
         StringBuilder statusString = new StringBuilder();
         statusString.append(padNumber(this.levelIndex+1, 2))
@@ -182,7 +192,7 @@ public class Sokoban implements GFInputListener, Updatable, Drawable {
                 .append("moves:").append(padNumber(this.moves, 4))
                 .append("          pushes:").append(padNumber(this.pushes, 4))
                 .append("          time:").append(formatTime(this.time));
-        
+
         g.setColor(Color.WHITE);
         g.fillRect(0, this.windowSize.height-STATUS_BAR_HEIGHT,
                 this.windowSize.width, STATUS_BAR_HEIGHT);
@@ -190,25 +200,25 @@ public class Sokoban implements GFInputListener, Updatable, Drawable {
         g.setFont(new Font(Font.MONOSPACED, Font.BOLD, STATUS_BAR_HEIGHT-2));
         g.drawString(statusString.toString(), 5, this.windowSize.height-5);
     }
-    
+
     private String padNumber(int number, int size) {
         String num = String.valueOf(number);
         String comp = String.valueOf((int)Math.pow(10, size-1));
         int lengthOfNum = num.length();
         int lengthOfComp = comp.length();
-        
+
         for (int i=lengthOfNum; i<lengthOfComp; i++) {
             num = "0" + num;
         }
-        
+
         return num;
     }
-    
+
     private String formatTime(float elapsedTimeInSeconds) {
         int hours = (int) (elapsedTimeInSeconds / 3600);
         int minutes = (int) ((elapsedTimeInSeconds - hours*3600) / 60);
         int seconds = (int) (elapsedTimeInSeconds - hours*3600 - minutes*60);
-        
+
         return hours + ":" + padNumber(minutes, 2) + ":" + padNumber(seconds, 2);
     }
 
